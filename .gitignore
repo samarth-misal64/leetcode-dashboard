@@ -1,0 +1,74 @@
+# Dependencies
+node_modules/
+package-lock.json
+yarn.lock
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Backups
+*.bak
+*.backup
+*~
+
+# Chart generation files (temporary) (moved to `archive/`)
+
+
+# Old versions (archived)
+
+# Archive folder created for non-essential files
+archive/
+
+# Local generated/company data (moved to `archive/`)
+
+
+# Python venv
+.venv/
+
+# Editor workspace (moved to `archive/` when not needed)
+

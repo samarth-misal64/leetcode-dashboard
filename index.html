@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LeetCode Dashboard - Problems, Companies, Insights</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f7f6ef;
+            --bg-soft: #fffdf4;
+            --card: #ffffff;
+            --ink: #14241f;
+            --muted: #5f6f67;
+            --accent: #ec6f3d;
+            --accent-soft: #ffe3d5;
+            --line: #d8ded7;
+            --ok: #2b8571;
+            --shadow: 0 20px 42px rgba(20, 36, 31, 0.08);
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 10px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Manrope", sans-serif;
+            color: var(--ink);
+            background:
+                radial-gradient(circle at 0% 0%, #f8dcca 0%, transparent 40%),
+                radial-gradient(circle at 95% 15%, #c9ece3 0%, transparent 40%),
+                linear-gradient(180deg, var(--bg-soft), var(--bg));
+            min-height: 100vh;
+        }
+
+        .page {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 34px 18px 48px;
+        }
+
+        .hero {
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            background: linear-gradient(120deg, #ffffff 0%, #fff8f4 48%, #f2fbf8 100%);
+            box-shadow: var(--shadow);
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+            animation: rise 500ms ease;
+        }
+
+        .hero::after {
+            content: "";
+            position: absolute;
+            width: 240px;
+            height: 240px;
+            border-radius: 999px;
+            right: -65px;
+            top: -90px;
+            background: radial-gradient(circle, #ffb48f 0%, rgba(255, 180, 143, 0) 70%);
+            pointer-events: none;
+        }
+
+        h1 {
+            font-family: "Space Grotesk", sans-serif;
+            font-size: clamp(1.6rem, 3vw, 2.55rem);
+            line-height: 1.1;
+            letter-spacing: -0.02em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            max-width: 760px;
+            margin-bottom: 24px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(130px, 1fr));
+            gap: 12px;
+        }
+
+        .stat {
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            background: rgba(255, 255, 255, 0.8);
+            padding: 14px;
+        }
+
+        .stat .value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+            color: var(--ink);
+        }
+
+        .stat .label {
+            color: var(--muted);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-top: 5px;
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 18px;
+            margin-top: 18px;
+        }
+
+        .controls {
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            background: var(--card);
+            box-shadow: var(--shadow);
+            padding: 18px;
+            display: grid;
+            gap: 14px;
+        }
+
+        .controls-row {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: 2fr 1.2fr 1fr 1fr auto;
+        }
+
+        .field label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 700;
+            letter-spacing: 0.07em;
+            text-transform: uppercase;
+            margin-bottom: 7px;
+            color: var(--muted);
+        }
+
+        .input, .select {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: var(--radius-sm);
+            background: #fff;
+            padding: 11px 12px;
+            color: var(--ink);
+            font-family: inherit;
+            font-size: 0.95rem;
+            transition: border-color 180ms ease, box-shadow 180ms ease;
+        }
+
+        .input:focus, .select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(236, 111, 61, 0.15);
+            outline: none;
+        }
+
+        .btn {
+            align-self: end;
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            font-weight: 700;
+            font-family: "Space Grotesk", sans-serif;
+            cursor: pointer;
+            transition: transform 150ms ease, box-shadow 150ms ease;
+            height: 42px;
+            padding: 0 15px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 8px 20px rgba(236, 111, 61, 0.33);
+        }
+
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-height: 36px;
+        }
+
+        .chip {
+            border: 1px solid #d5dbd4;
+            background: #f9fbf9;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: 0.82rem;
+            color: #3f4b45;
+            cursor: pointer;
+            transition: all 150ms ease;
+        }
+
+        .chip:hover, .chip.active {
+            border-color: var(--accent);
+            background: var(--accent-soft);
+            color: #622b15;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1.15fr 1fr;
+            gap: 18px;
+        }
+
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: var(--radius-lg);
+            background: var(--card);
+            box-shadow: var(--shadow);
+            padding: 14px;
+            animation: rise 600ms ease;
+        }
+
+        .panel-title {
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 1.05rem;
+            margin-bottom: 8px;
+        }
+
+        .panel-subtitle {
+            color: var(--muted);
+            font-size: 0.88rem;
+            margin-bottom: 10px;
+        }
+
+        .table-wrap {
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            overflow: auto;
+            max-height: 64vh;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 650px;
+        }
+
+        thead {
+            position: sticky;
+            top: 0;
+            z-index: 4;
+            background: #f3f7f5;
+        }
+
+        th {
+            text-align: left;
+            padding: 11px;
+            font-size: 0.8rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #3f4a44;
+            border-bottom: 1px solid var(--line);
+            cursor: pointer;
+        }
+
+        th:nth-child(1), td:nth-child(1), th:nth-child(3), td:nth-child(3), th:nth-child(4), td:nth-child(4), th:nth-child(5), td:nth-child(5) {
+            text-align: center;
+        }
+
+        td {
+            padding: 11px;
+            border-bottom: 1px solid #edf0ec;
+            vertical-align: top;
+            font-size: 0.92rem;
+        }
+
+        tbody tr:hover {
+            background: #fcf6f2;
+        }
+
+        .problem-link {
+            color: #135a92;
+            text-decoration: none;
+            font-weight: 700;
+        }
+
+        .problem-link:hover {
+            text-decoration: underline;
+        }
+
+        .topic-list {
+            margin-top: 6px;
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        .topic {
+            font-size: 0.72rem;
+            padding: 2px 7px;
+            border-radius: 999px;
+            border: 1px solid #d8dfd8;
+            background: #f5f7f4;
+            color: #4a5650;
+            cursor: pointer;
+        }
+
+        .topic:hover {
+            border-color: var(--ok);
+            color: #1f5d50;
+        }
+
+        .difficulty-pill {
+            display: inline-block;
+            font-size: 0.72rem;
+            padding: 3px 8px;
+            border-radius: 999px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            border: 1px solid transparent;
+        }
+
+        .difficulty-easy {
+            color: #1e6f4f;
+            background: #dff4ea;
+            border-color: #b9e8d2;
+        }
+
+        .difficulty-medium {
+            color: #8a5710;
+            background: #fff1d8;
+            border-color: #f3d9a6;
+        }
+
+        .difficulty-hard {
+            color: #8b2c2c;
+            background: #fde2df;
+            border-color: #f4bcb7;
+        }
+
+        .result-line {
+            color: var(--muted);
+            font-size: 0.88rem;
+        }
+
+        .empty {
+            padding: 24px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .chart-box {
+            border: 1px solid var(--line);
+            border-radius: var(--radius-md);
+            background: #fff;
+            padding: 12px;
+            height: 420px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chart-box canvas {
+            width: 100% !important;
+            height: 360px !important;
+            display: block;
+        }
+
+        /* Make difficulty chart larger specifically */
+        #difficultyChart {
+            height: 380px !important;
+        }
+
+        footer {
+            margin-top: 16px;
+            color: var(--muted);
+            font-size: 0.84rem;
+            text-align: center;
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 1020px) {
+            .stats {
+                grid-template-columns: repeat(2, minmax(130px, 1fr));
+            }
+
+            .controls-row {
+                grid-template-columns: 1fr;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .btn {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .page {
+                padding: 18px 12px 30px;
+            }
+
+            .hero, .panel, .controls {
+                border-radius: 14px;
+            }
+
+            .hero {
+                padding: 20px 16px;
+            }
+
+            .stats {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .table-wrap {
+                max-height: 56vh;
+            }
+
+            .chart-box {
+                height: 330px;
+            }
+
+            .chart-box canvas {
+                height: 235px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page">
+        <section class="hero">
+            <h1>LeetCode Company Insights</h1>
+            <p class="subtitle">Search all popular interview problems, switch between companies, and explore pattern-level charts in real time.</p>
+            <div class="stats">
+                <div class="stat"><div id="statProblems" class="value">-</div><div class="label">Problems</div></div>
+                <div class="stat"><div id="statCompanies" class="value">-</div><div class="label">Companies</div></div>
+                <div class="stat"><div id="statRecords" class="value">-</div><div class="label">Records</div></div>
+                <div class="stat"><div id="statPeak" class="value">-</div><div class="label">Highest Ask Count</div></div>
+            </div>
+        </section>
+
+        <div class="layout">
+            <section class="controls">
+                <div class="controls-row">
+                    <div class="field">
+                        <label for="searchInput">Search Problem or Topic</label>
+                        <input id="searchInput" class="input" type="text" placeholder="Try: Two Sum, DFS, Dynamic Programming" autocomplete="off">
+                    </div>
+                    <div class="field">
+                        <label for="companySelect">Company</label>
+                        <select id="companySelect" class="select">
+                            <option value="__ALL__">All Companies</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="topNSelect">Chart Top N</label>
+                        <select id="topNSelect" class="select">
+                            <option value="8">Top 8</option>
+                            <option value="12" selected>Top 12</option>
+                            <option value="20">Top 20</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="difficultySelect">Difficulty</label>
+                        <select id="difficultySelect" class="select">
+                            <option value="ALL" selected>All Levels</option>
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+                    <button id="clearFilters" class="btn btn-primary" type="button">Clear Filters</button>
+                </div>
+                <div id="topicChips" class="chips"></div>
+                <div id="resultLine" class="result-line">Loading dataset...</div>
+            </section>
+
+            <section class="content-grid">
+                <article class="panel">
+                    <h2 class="panel-title">Problem Table</h2>
+                    <p class="panel-subtitle" id="tableSubtitle">Ranked by asked frequency</p>
+                    <div class="table-wrap">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th data-sort="id">#</th>
+                                    <th data-sort="name">Problem</th>
+                                    <th data-sort="difficulty">Difficulty</th>
+                                    <th data-sort="count">Asked</th>
+                                    <th data-sort="companies">Companies</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody"></tbody>
+                        </table>
+                        <div id="emptyState" class="empty" style="display:none;">No problems match the current filters.</div>
+                    </div>
+                </article>
+
+                <aside class="chart-grid">
+                    <article class="panel chart-box">
+                        <h2 class="panel-title">Top Problems</h2>
+                        <p class="panel-subtitle">Highest asked problems for selected view</p>
+                        <canvas id="topProblemsChart" aria-label="Top problems chart"></canvas>
+                    </article>
+                    <article class="panel chart-box">
+                        <h2 class="panel-title">Difficulty Mix</h2>
+                        <p class="panel-subtitle">Easy vs Medium vs Hard in current results</p>
+                        <canvas id="difficultyChart" aria-label="Difficulty distribution chart"></canvas>
+                    </article>
+                </aside>
+            </section>
+        </div>
+
+        <footer>Data source: 187 company-specific datasets. Updated May 2026.</footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <script src="all_problems_data.js"></script>
+    <script src="company_data.js"></script>
+    <script>
+        const ALL_COMPANIES = "__ALL__";
+
+        const state = {
+            allProblems: [],
+            displayedProblems: [],
+            companyMap: {},
+            problemCompanies: {},
+            companyStats: {},
+            searchTerm: "",
+            selectedCompany: ALL_COMPANIES,
+            selectedTopic: "",
+            selectedDifficulty: "ALL",
+            topN: 12,
+            sort: { key: "count", dir: "desc" },
+            charts: { topProblems: null, difficulty: null },
+        };
+
+        function initialize() {
+            if (typeof PROBLEMS_DATA === "undefined" || typeof COMPANY_DATA === "undefined") {
+                document.getElementById("resultLine").textContent = "Dataset failed to load. Refresh and try again.";
+                return;
+            }
+
+            state.allProblems = PROBLEMS_DATA.map((problem) => ({ ...problem }));
+            state.companyMap = COMPANY_DATA.companies || {};
+            state.problemCompanies = COMPANY_DATA.problemCompanies || {};
+
+            const nameToMeta = new Map(state.allProblems.map((p) => [p.name, p]));
+            const companyNames = Object.keys(state.companyMap).sort((a, b) => a.localeCompare(b));
+
+            for (const company of companyNames) {
+                state.companyStats[company] = state.companyMap[company].reduce((sum, row) => sum + (row.count || 0), 0);
+            }
+
+            const enrichedAll = state.allProblems.map((problem) => {
+                const companies = state.problemCompanies[problem.name] || [];
+                return {
+                    id: problem.id,
+                    name: problem.name,
+                    url: problem.url,
+                    count: problem.count,
+                    topics: problem.topics || ["Algorithms"],
+                    difficulty: problem.difficulty || "Medium",
+                    companies: companies.length,
+                };
+            });
+
+            state.allProblems = enrichedAll;
+
+            for (const company of companyNames) {
+                state.companyMap[company] = state.companyMap[company].map((row, index) => {
+                    const base = nameToMeta.get(row.name);
+                    const companies = state.problemCompanies[row.name] || [];
+                    return {
+                        id: index + 1,
+                        name: row.name,
+                        url: row.url || (base ? base.url : "#"),
+                        count: row.count,
+                        topics: base && base.topics ? base.topics : ["Algorithms"],
+                        difficulty: base && base.difficulty ? base.difficulty : "Medium",
+                        companies: companies.length,
+                    };
+                });
+            }
+
+            renderCompanyOptions(companyNames);
+            wireEvents();
+            updateSummaryStats();
+            applyFilters();
+        }
+
+        function renderCompanyOptions(companyNames) {
+            const select = document.getElementById("companySelect");
+            const options = [
+                `<option value="${ALL_COMPANIES}">All Companies</option>`,
+                ...companyNames.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`),
+            ];
+            select.innerHTML = options.join("");
+        }
+
+        function wireEvents() {
+            document.getElementById("searchInput").addEventListener("input", (e) => {
+                state.searchTerm = e.target.value.trim().toLowerCase();
+                applyFilters();
+            });
+
+            document.getElementById("companySelect").addEventListener("change", (e) => {
+                state.selectedCompany = e.target.value;
+                state.selectedTopic = "";
+                renderTopicChips();
+                applyFilters();
+            });
+
+            document.getElementById("topNSelect").addEventListener("change", (e) => {
+                state.topN = Number(e.target.value) || 12;
+                renderCharts();
+            });
+
+            document.getElementById("difficultySelect").addEventListener("change", (e) => {
+                state.selectedDifficulty = e.target.value;
+                applyFilters();
+            });
+
+            document.getElementById("clearFilters").addEventListener("click", () => {
+                state.searchTerm = "";
+                state.selectedTopic = "";
+                state.selectedCompany = ALL_COMPANIES;
+                state.selectedDifficulty = "ALL";
+                state.sort = { key: "count", dir: "desc" };
+                document.getElementById("searchInput").value = "";
+                document.getElementById("companySelect").value = ALL_COMPANIES;
+                document.getElementById("difficultySelect").value = "ALL";
+                renderTopicChips();
+                applyFilters();
+            });
+
+            document.getElementById("tableBody").addEventListener("click", (e) => {
+                const chip = e.target.closest(".topic");
+                if (!chip) {
+                    return;
+                }
+                const topic = chip.getAttribute("data-topic");
+                if (!topic) {
+                    return;
+                }
+                state.selectedTopic = state.selectedTopic === topic ? "" : topic;
+                renderTopicChips();
+                applyFilters();
+            });
+
+            document.querySelectorAll("thead th").forEach((th) => {
+                th.addEventListener("click", () => {
+                    const key = th.getAttribute("data-sort");
+                    if (!key) {
+                        return;
+                    }
+                    if (state.sort.key === key) {
+                        state.sort.dir = state.sort.dir === "asc" ? "desc" : "asc";
+                    } else {
+                        state.sort.key = key;
+                        state.sort.dir = key === "name" ? "asc" : "desc";
+                    }
+                    applySorting();
+                    renderTable();
+                    renderCharts();
+                });
+            });
+
+            renderTopicChips();
+        }
+
+        function getSourceList() {
+            if (state.selectedCompany === ALL_COMPANIES) {
+                return state.allProblems;
+            }
+            return state.companyMap[state.selectedCompany] || [];
+        }
+
+        function applyFilters() {
+            const source = getSourceList();
+            const search = state.searchTerm;
+            const activeTopic = state.selectedTopic;
+            const selectedDifficulty = state.selectedDifficulty;
+
+            state.displayedProblems = source.filter((problem) => {
+                const nameMatch = !search || problem.name.toLowerCase().includes(search);
+                const topicMatch = !search || problem.topics.some((topic) => topic.toLowerCase().includes(search));
+                const topicFilterMatch = !activeTopic || problem.topics.includes(activeTopic);
+                const difficultyMatch = selectedDifficulty === "ALL" || problem.difficulty === selectedDifficulty;
+                return (nameMatch || topicMatch) && topicFilterMatch && difficultyMatch;
+            });
+
+            applySorting();
+            renderMeta();
+            renderTable();
+            renderCharts();
+        }
+
+        function applySorting() {
+            const dir = state.sort.dir === "asc" ? 1 : -1;
+            const key = state.sort.key;
+
+            state.displayedProblems.sort((a, b) => {
+                if (key === "name") {
+                    return dir * a.name.localeCompare(b.name);
+                }
+                if (key === "companies") {
+                    return dir * ((a.companies || 0) - (b.companies || 0));
+                }
+                if (key === "id") {
+                    return dir * ((a.id || 0) - (b.id || 0));
+                }
+                if (key === "difficulty") {
+                    const rank = { Easy: 1, Medium: 2, Hard: 3 };
+                    return dir * ((rank[a.difficulty] || 0) - (rank[b.difficulty] || 0));
+                }
+                return dir * ((a.count || 0) - (b.count || 0));
+            });
+        }
+
+        function renderMeta() {
+            const source = getSourceList();
+            const shown = state.displayedProblems.length;
+            const total = source.length;
+            const scope = state.selectedCompany === ALL_COMPANIES ? "all companies" : state.selectedCompany;
+            const topicText = state.selectedTopic ? ` | topic: ${state.selectedTopic}` : "";
+            const diffText = state.selectedDifficulty !== "ALL" ? ` | difficulty: ${state.selectedDifficulty}` : "";
+            document.getElementById("resultLine").textContent = `Showing ${shown.toLocaleString()} of ${total.toLocaleString()} problems in ${scope}${topicText}${diffText}`;
+
+            const subtitle = state.selectedCompany === ALL_COMPANIES
+                ? "Asked count is aggregated across all companies"
+                : `Asked count is for ${state.selectedCompany}`;
+            document.getElementById("tableSubtitle").textContent = subtitle;
+        }
+
+        function renderTopicChips() {
+            const chipsRoot = document.getElementById("topicChips");
+            const source = getSourceList();
+            const topicCounts = new Map();
+
+            source.forEach((problem) => {
+                (problem.topics || []).forEach((topic) => {
+                    topicCounts.set(topic, (topicCounts.get(topic) || 0) + 1);
+                });
+            });
+
+            const topTopics = [...topicCounts.entries()]
+                .sort((a, b) => {
+                    if (b[1] !== a[1]) return b[1] - a[1];
+                    return a[0].toLowerCase().localeCompare(b[0].toLowerCase());
+                })
+                .slice(0, 60)
+                .map(([topic]) => topic);
+
+            if (topTopics.length === 0) {
+                chipsRoot.innerHTML = "";
+                return;
+            }
+
+            chipsRoot.innerHTML = topTopics
+                .map((topic) => `<button class="chip ${state.selectedTopic === topic ? "active" : ""}" data-topic="${escapeHtml(topic)}">${escapeHtml(topic)}</button>`)
+                .join("");
+
+            chipsRoot.querySelectorAll(".chip").forEach((chip) => {
+                chip.addEventListener("click", () => {
+                    const topic = chip.getAttribute("data-topic");
+                    state.selectedTopic = state.selectedTopic === topic ? "" : topic;
+                    renderTopicChips();
+                    applyFilters();
+                });
+            });
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById("tableBody");
+            const empty = document.getElementById("emptyState");
+
+            if (state.displayedProblems.length === 0) {
+                tbody.innerHTML = "";
+                empty.style.display = "block";
+                return;
+            }
+
+            empty.style.display = "none";
+            const rows = state.displayedProblems.map((problem, index) => {
+                const topicsHtml = (problem.topics || [])
+                    .slice(0, 20)
+                    .slice()
+                    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+                    .map((topic) => `<span class="topic" data-topic="${escapeHtml(topic)}">${escapeHtml(topic)}</span>`)
+                    .join(" ");
+
+                return `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>
+                            <a class="problem-link" href="${escapeHtml(problem.url || "#")}" target="_blank" rel="noopener">${escapeHtml(problem.name)}</a>
+                            <div class="topic-list">${topicsHtml}</div>
+                        </td>
+                        <td><span class="difficulty-pill ${difficultyClass(problem.difficulty)}">${escapeHtml(problem.difficulty || "-")}</span></td>
+                        <td>${Number(problem.count || 0).toLocaleString()}</td>
+                        <td>${Number(problem.companies || 0).toLocaleString()}</td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = rows.join("");
+        }
+
+        function renderCharts() {
+            const list = state.displayedProblems.slice(0, state.topN);
+            const topLabels = list.map((p) => truncate(p.name, 32));
+            const topValues = list.map((p) => p.count || 0);
+
+            const topCanvas = document.getElementById("topProblemsChart");
+            if (state.charts.topProblems) {
+                state.charts.topProblems.destroy();
+            }
+            state.charts.topProblems = new Chart(topCanvas, {
+                type: "bar",
+                data: {
+                    labels: topLabels,
+                    datasets: [{
+                        label: "Asked",
+                        data: topValues,
+                        borderRadius: 6,
+                        backgroundColor: [
+                            "#ec6f3d", "#f2894f", "#f8a764", "#2b8571", "#4aa88f", "#7fc3af",
+                            "#dc5f55", "#ea8172", "#95b9ff", "#5f88e5", "#849858", "#adbb77"
+                        ],
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: "y",
+                    plugins: {
+                        legend: { display: false },
+                    },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { precision: 0 } },
+                        y: { ticks: { font: { size: 11 } } }
+                    },
+                },
+            });
+
+            const diffCounts = { Easy: 0, Medium: 0, Hard: 0 };
+            state.displayedProblems.forEach((problem) => {
+                const key = problem.difficulty;
+                if (key in diffCounts) {
+                    diffCounts[key] += 1;
+                }
+            });
+
+            const difficultyCanvas = document.getElementById("difficultyChart");
+            if (state.charts.difficulty) {
+                state.charts.difficulty.destroy();
+            }
+            state.charts.difficulty = new Chart(difficultyCanvas, {
+                type: "doughnut",
+                data: {
+                    labels: ["Easy", "Medium", "Hard"],
+                    datasets: [{
+                        data: [diffCounts.Easy, diffCounts.Medium, diffCounts.Hard],
+                        backgroundColor: ["#2b8571", "#f2a65a", "#dc5f55"],
+                        borderColor: "#ffffff",
+                        borderWidth: 2,
+                    }],
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: "right", labels: { boxWidth: 14, padding: 12 } },
+                    },
+                    layout: { padding: { left: 8, right: 8, top: 10, bottom: 8 } },
+                    cutout: "36%",
+                    radius: "85%",
+                },
+            });
+        }
+
+        function updateSummaryStats() {
+            const allRecords = COMPANY_DATA.meta && COMPANY_DATA.meta.records ? COMPANY_DATA.meta.records : 0;
+            const allCompanies = COMPANY_DATA.meta && COMPANY_DATA.meta.companies ? COMPANY_DATA.meta.companies : 0;
+            const peak = Math.max(...state.allProblems.map((p) => p.count || 0));
+
+            document.getElementById("statProblems").textContent = state.allProblems.length.toLocaleString();
+            document.getElementById("statCompanies").textContent = allCompanies.toLocaleString();
+            document.getElementById("statRecords").textContent = allRecords.toLocaleString();
+            document.getElementById("statPeak").textContent = peak.toLocaleString();
+        }
+
+        function truncate(text, maxLen) {
+            if (text.length <= maxLen) {
+                return text;
+            }
+            return text.slice(0, maxLen - 1) + "...";
+        }
+
+        function difficultyClass(level) {
+            if (level === "Easy") {
+                return "difficulty-easy";
+            }
+            if (level === "Hard") {
+                return "difficulty-hard";
+            }
+            return "difficulty-medium";
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        window.addEventListener("DOMContentLoaded", initialize);
+    </script>
+</body>
+</html>
