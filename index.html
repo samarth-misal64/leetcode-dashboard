@@ -381,6 +381,98 @@
             display: block;
         }
 
+        .chart-tooltip {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: auto;
+            opacity: 0;
+            transform: translateY(4px);
+            transition: opacity 120ms ease, transform 120ms ease;
+            min-width: 240px;
+            max-width: 360px;
+            max-height: 280px;
+            overflow: auto;
+            padding: 12px 14px;
+            border: 1px solid rgba(20, 36, 31, 0.12);
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 18px 50px rgba(20, 36, 31, 0.18);
+            color: var(--ink);
+            font-size: 0.88rem;
+            line-height: 1.4;
+            backdrop-filter: blur(10px);
+        }
+
+        .chart-tooltip.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .chart-tooltip-title {
+            font-family: "Space Grotesk", sans-serif;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .chart-tooltip-meta {
+            color: var(--muted);
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+        }
+
+        .chart-tooltip-section {
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin: 8px 0 6px;
+        }
+
+        .chart-tooltip-section-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin: 8px 0 6px;
+        }
+
+        .chart-tooltip-asked {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: #41504a;
+            background: #eef3f1;
+            border: 1px solid #d9e2de;
+            border-radius: 999px;
+            padding: 2px 8px;
+            white-space: nowrap;
+        }
+
+        .chart-tooltip-list {
+            display: grid;
+            gap: 4px;
+        }
+
+        .chart-tooltip-item {
+            padding: 4px 8px;
+            border-radius: 8px;
+            background: #f6f8f7;
+            color: #283530;
+        }
+
+        .chart-tooltip-item-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .chart-tooltip-item-count {
+            color: #4a5a53;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
         /* Make difficulty chart larger specifically */
         #difficultyChart {
             height: 380px !important;
@@ -546,12 +638,78 @@
     <script src="company_data.js"></script>
     <script>
         const ALL_COMPANIES = "__ALL__";
+        let chartTooltipHideTimer = null;
+        let chartTooltipLastIndex = -1;
+        const TOPIC_DISPLAY_ORDER = [
+            "Array",
+            "String",
+            "Hash Table",
+            "Math",
+            "Dynamic Programming",
+            "Sorting",
+            "Depth-First Search",
+            "Tree",
+            "Greedy",
+            "Binary Tree",
+            "Two Pointers",
+            "Breadth-First Search",
+            "Matrix",
+            "Binary Search",
+            "Stack",
+            "Design",
+            "Simulation",
+            "Bit Manipulation",
+            "Counting",
+            "Backtracking",
+            "Heap (Priority Queue)",
+            "Linked List",
+            "Prefix Sum",
+            "Sliding Window",
+            "Binary Search Tree",
+            "Graph Theory",
+            "Recursion",
+            "Divide and Conquer",
+            "Trie",
+            "Queue",
+            "Monotonic Stack",
+            "Union-Find",
+            "Geometry",
+            "Enumeration",
+            "Ordered Set",
+            "Data Stream",
+            "Memoization",
+            "String Matching",
+            "Hash Function",
+            "Game Theory",
+            "Segment Tree",
+            "Binary Indexed Tree",
+            "Bitmask",
+            "Doubly-Linked List",
+            "Iterator",
+            "Topological Sort",
+            "Interactive",
+            "Number Theory",
+            "Bucket Sort",
+            "Counting Sort",
+            "Randomized",
+            "Brainteaser",
+            "Combinatorics",
+            "Concurrency",
+            "Eulerian Circuit",
+            "Graph",
+            "Merge Sort",
+            "Monotonic Queue",
+            "Quickselect",
+            "Radix Sort",
+        ];
+        const TOPIC_ORDER = new Map(TOPIC_DISPLAY_ORDER.map((topic, index) => [topic.toLowerCase(), index]));
 
         const state = {
             allProblems: [],
             displayedProblems: [],
             companyMap: {},
             problemCompanies: {},
+            problemCompanyCounts: {},
             companyStats: {},
             searchTerm: "",
             selectedCompany: ALL_COMPANIES,
@@ -559,6 +717,7 @@
             selectedDifficulty: "ALL",
             topN: 12,
             sort: { key: "count", dir: "desc" },
+            topProblemDetails: [],
             charts: { topProblems: null, difficulty: null },
         };
 
@@ -595,6 +754,13 @@
             state.allProblems = enrichedAll;
 
             for (const company of companyNames) {
+                const rows = state.companyMap[company] || [];
+                rows.forEach((row) => {
+                    if (!state.problemCompanyCounts[row.name]) {
+                        state.problemCompanyCounts[row.name] = {};
+                    }
+                    state.problemCompanyCounts[row.name][company] = Number(row.count || 0);
+                });
                 state.companyMap[company] = state.companyMap[company].map((row, index) => {
                     const base = nameToMeta.get(row.name);
                     const companies = state.problemCompanies[row.name] || [];
@@ -764,20 +930,25 @@
             const chipsRoot = document.getElementById("topicChips");
             const source = getSourceList();
             const topicCounts = new Map();
+            const topicLabels = new Map();
 
             source.forEach((problem) => {
                 (problem.topics || []).forEach((topic) => {
-                    topicCounts.set(topic, (topicCounts.get(topic) || 0) + 1);
+                    const normalized = normalizeTopic(topic);
+                    if (!normalized) {
+                        return;
+                    }
+                    topicCounts.set(normalized, (topicCounts.get(normalized) || 0) + 1);
+                    if (!topicLabels.has(normalized)) {
+                        topicLabels.set(normalized, topic.trim());
+                    }
                 });
             });
 
-            const topTopics = [...topicCounts.entries()]
-                .sort((a, b) => {
-                    if (b[1] !== a[1]) return b[1] - a[1];
-                    return a[0].toLowerCase().localeCompare(b[0].toLowerCase());
-                })
-                .slice(0, 60)
-                .map(([topic]) => topic);
+            const topTopics = [...topicCounts.keys()]
+                .sort((left, right) => left.localeCompare(right))
+                .map((topic) => topicLabels.get(topic) || topic)
+                .slice(0, 60);
 
             if (topTopics.length === 0) {
                 chipsRoot.innerHTML = "";
@@ -810,10 +981,8 @@
 
             empty.style.display = "none";
             const rows = state.displayedProblems.map((problem, index) => {
-                const topicsHtml = (problem.topics || [])
+                const topicsHtml = sortTopics(problem.topics || [])
                     .slice(0, 20)
-                    .slice()
-                    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
                     .map((topic) => `<span class="topic" data-topic="${escapeHtml(topic)}">${escapeHtml(topic)}</span>`)
                     .join(" ");
 
@@ -835,6 +1004,10 @@
 
         function renderCharts() {
             const list = state.displayedProblems.slice(0, state.topN);
+            state.topProblemDetails = list.map((problem) => ({
+                ...problem,
+                companiesList: sortCompanyEntries(problem.name),
+            }));
             const topLabels = list.map((p) => truncate(p.name, 32));
             const topValues = list.map((p) => p.count || 0);
 
@@ -860,8 +1033,22 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     indexAxis: "y",
+                    interaction: {
+                        mode: "nearest",
+                        axis: "xy",
+                        intersect: true,
+                    },
+                    hover: {
+                        mode: "nearest",
+                        axis: "xy",
+                        intersect: true,
+                    },
                     plugins: {
                         legend: { display: false },
+                        tooltip: {
+                            enabled: false,
+                            external: (context) => renderChartTooltip(context),
+                        },
                     },
                     scales: {
                         x: { beginAtZero: true, ticks: { precision: 0 } },
@@ -932,6 +1119,147 @@
                 return "difficulty-hard";
             }
             return "difficulty-medium";
+        }
+
+        function sortTopics(topics) {
+            return [...topics]
+                .map((topic) => topic.trim())
+                .filter(Boolean)
+                .sort(compareTopics);
+        }
+
+        function compareTopics(left, right) {
+            const leftKey = normalizeTopic(left);
+            const rightKey = normalizeTopic(right);
+            return leftKey.localeCompare(rightKey);
+        }
+
+        function renderChartTooltip(context) {
+            const { chart, tooltip } = context;
+            const tooltipElement = getChartTooltipElement();
+
+            if (!tooltip || tooltip.opacity === 0) {
+                scheduleChartTooltipHide();
+                return;
+            }
+
+            cancelChartTooltipHide();
+
+            const tooltipPoint = tooltip.dataPoints && tooltip.dataPoints[0] ? tooltip.dataPoints[0] : null;
+            const activeElement = chart.getActiveElements && chart.getActiveElements()[0] ? chart.getActiveElements()[0] : null;
+            const index = tooltipPoint ? tooltipPoint.dataIndex : (activeElement ? activeElement.index : -1);
+            if (index < 0 || index >= state.topProblemDetails.length) {
+                chartTooltipLastIndex = -1;
+                scheduleChartTooltipHide();
+                return;
+            }
+
+            if (chartTooltipLastIndex !== index) {
+                tooltipElement.scrollTop = 0;
+                chartTooltipLastIndex = index;
+            }
+
+            const problem = state.topProblemDetails[index];
+            const companies = problem ? problem.companiesList || [] : [];
+            const problemName = problem ? problem.name : "Top problem";
+            const askedCount = tooltipPoint ? tooltipPoint.formattedValue : String(problem.count || "");
+
+            tooltipElement.innerHTML = `
+                <div class="chart-tooltip-title">${escapeHtml(problemName)}</div>
+                <div class="chart-tooltip-meta">Asked ${escapeHtml(askedCount)}</div>
+                <div class="chart-tooltip-section-row">
+                    <div class="chart-tooltip-section">Companies</div>
+                    <div class="chart-tooltip-asked">Asked ${escapeHtml(askedCount)}</div>
+                </div>
+                <div class="chart-tooltip-list">
+                    ${companies.length
+                        ? companies.map((entry) => `<div class="chart-tooltip-item"><div class="chart-tooltip-item-row"><span>${escapeHtml(entry.name)}</span><span class="chart-tooltip-item-count">${Number(entry.count || 0).toLocaleString()}</span></div></div>`).join("")
+                        : `<div class="chart-tooltip-item">No company mapping available</div>`}
+                </div>
+            `;
+
+            const canvasRect = chart.canvas.getBoundingClientRect();
+            const chartPanel = chart.canvas.closest(".chart-box");
+            const panelRect = chartPanel ? chartPanel.getBoundingClientRect() : canvasRect;
+            const tooltipRect = tooltipElement.getBoundingClientRect();
+            const padding = 12;
+            const viewportRight = window.innerWidth - padding;
+            const preferredLeft = canvasRect.right + 14;
+            let left = preferredLeft + tooltipRect.width <= viewportRight
+                ? preferredLeft
+                : Math.max(padding, viewportRight - tooltipRect.width);
+            let top = canvasRect.top + tooltip.caretY - tooltipRect.height / 2;
+
+            const panelTop = panelRect.top + padding;
+            const panelBottom = panelRect.bottom - padding;
+
+            if (top + tooltipRect.height > panelBottom) {
+                top = panelBottom - tooltipRect.height;
+            }
+
+            if (top < panelTop) {
+                top = panelTop;
+            }
+
+            tooltipElement.style.left = `${left}px`;
+            tooltipElement.style.top = `${top}px`;
+            tooltipElement.classList.add("visible");
+        }
+
+        function getChartTooltipElement() {
+            let tooltipElement = document.getElementById("chartTooltip");
+
+            if (!tooltipElement) {
+                tooltipElement = document.createElement("div");
+                tooltipElement.id = "chartTooltip";
+                tooltipElement.className = "chart-tooltip";
+                tooltipElement.addEventListener("mouseenter", () => {
+                    cancelChartTooltipHide();
+                });
+                tooltipElement.addEventListener("mouseleave", () => {
+                    tooltipElement.classList.remove("visible");
+                });
+                document.body.appendChild(tooltipElement);
+            }
+
+            return tooltipElement;
+        }
+
+        function sortCompanies(companies) {
+            return [...companies].sort((left, right) => left.toLowerCase().localeCompare(right.toLowerCase()));
+        }
+
+        function sortCompanyEntries(problemName) {
+            const companies = sortCompanies(state.problemCompanies[problemName] || []);
+            const counts = state.problemCompanyCounts[problemName] || {};
+            return companies.map((company) => ({
+                name: company,
+                count: Number(counts[company] || 0),
+            }));
+        }
+
+        function normalizeTopic(topic) {
+            return String(topic || "").trim().toLowerCase();
+        }
+
+        function scheduleChartTooltipHide() {
+            cancelChartTooltipHide();
+            chartTooltipHideTimer = setTimeout(() => {
+                const tooltipElement = document.getElementById("chartTooltip");
+                if (!tooltipElement || !tooltipElement.matches(":hover")) {
+                    if (tooltipElement) {
+                        tooltipElement.classList.remove("visible");
+                    }
+                    chartTooltipLastIndex = -1;
+                }
+            }, 120);
+        }
+
+        function cancelChartTooltipHide() {
+            if (chartTooltipHideTimer) {
+                clearTimeout(chartTooltipHideTimer);
+                chartTooltipHideTimer = null;
+            }
         }
 
         function escapeHtml(value) {
